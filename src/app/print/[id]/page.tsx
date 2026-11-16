@@ -1,5 +1,5 @@
 "use client";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo } from "react";
 import { AppRoot } from "@/components/Shell";
 import { useModel } from "@/lib/hooks";
@@ -8,16 +8,16 @@ import { buildDeck } from "@/lib/deck/build";
 import { formatInfo, platformLabel } from "@/lib/constants";
 import { DeckFont, SlideView } from "@/components/plan/SlideView";
 import { Button } from "@/components/ui";
-import { compact, fmtDate, money } from "@/lib/utils";
+import { compact, fmtDate, IS_PREVIEW, money } from "@/lib/utils";
 
 function Doc() {
-  const { id } = useParams<{ id: string }>(); const sp = useSearchParams(); const t = useT(); const model = useModel(id);
+  const { id } = useParams<{ id: string }>(); const sp = useSearchParams(); const t = useT(); const model = useModel(id); const router = useRouter();
   const doc = sp.get("doc") ?? "deck"; const auto = sp.get("auto") === "1";
   const slides = useMemo(() => (model && doc === "deck" ? buildDeck(model) : []), [model, doc]);
-  useEffect(() => { if (model) document.title = `${model.campaign.brief.name} — ${doc === "deck" ? "Presentation" : doc === "briefs" ? "Influencer briefs" : "Attendance schedule"}`; if (model && auto) { const x = setTimeout(() => window.print(), 900); return () => clearTimeout(x); } }, [model, auto, doc]);
+  useEffect(() => { if (model) document.title = `${model.campaign.brief.name} — ${doc === "deck" ? "Presentation" : doc === "briefs" ? "Influencer briefs" : "Attendance schedule"}`; if (model && auto && !IS_PREVIEW) { const x = setTimeout(() => window.print(), 900); return () => clearTimeout(x); } }, [model, auto, doc]);
   if (!model) return <p className="p-8">{t("Campaign not found")}</p>;
   const c = model.campaign, b = c.brief, cur = model.budget.currency;
-  const bar = <div className="no-print sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-surface px-5 py-3"><div className="text-[14px] font-semibold">{b.name}</div><div className="flex items-center gap-3"><span className="text-[12.5px] text-ink-2">{t("Choose “Save as PDF” as the destination to export a PDF.")}</span><Button variant="primary" onClick={() => window.print()}>{t("Print / Save as PDF")}</Button></div></div>;
+  const bar = <div className="no-print sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-surface px-5 py-3"><div className="text-[14px] font-semibold">{b.name}</div>{IS_PREVIEW ? <div className="flex items-center gap-3"><span className="text-[12.5px] text-ink-2">{t("Printing and PDF export work in the hosted version.")}</span><Button variant="primary" onClick={() => router.back()}>{t("Back")}</Button></div> : <div className="flex items-center gap-3"><span className="text-[12.5px] text-ink-2">{t("Choose “Save as PDF” as the destination to export a PDF.")}</span><Button variant="primary" onClick={() => window.print()}>{t("Print / Save as PDF")}</Button></div>}</div>;
   if (doc === "deck") return (<div style={{ background: "#fff" }}><DeckFont deck={c.deck} />{bar}<div className="mx-auto max-w-[1100px] space-y-6 p-6 print:max-w-none print:space-y-0 print:p-0">{slides.map((s, i) => <div key={s.id} className="print-page overflow-hidden rounded-xl border shadow-card print:rounded-none print:border-0 print:shadow-none"><SlideView slide={s} deck={c.deck} page={i + 1} total={slides.length} campaign={b.name} /></div>)}</div></div>);
   const portrait = <style>{`@media print { @page { size: A4 portrait; margin: 14mm; } }`}</style>;
   const byMsg = Object.fromEntries(c.messages.map((m) => [m.id, m]));

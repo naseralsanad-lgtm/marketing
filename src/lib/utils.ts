@@ -45,12 +45,33 @@ export function rng(seed: string) {
   };
 }
 
+/** true in the in-Claude preview build (single-page bundle without a server). */
+export const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW === "1";
+
 export function download(filename: string, data: Blob | string, mime = "text/plain;charset=utf-8") {
   const blob = typeof data === "string" ? new Blob([data], { type: mime }) : data;
+  if (IS_PREVIEW) {
+    // Inside Claude a page cannot start a download itself; it asks the viewer to save the file.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const claude = (window as any).claude;
+    const fail = (msg: string) => window.dispatchEvent(new CustomEvent("mp:toast", { detail: msg }));
+    if (!claude?.use) { fail("Saving files is not available in this view."); return; }
+    claude.use("downloads").then(async (d: { save: (o: { filename: string; data: Blob }) => Promise<unknown> } | null) => {
+      if (!d) { fail("Saving files is not available in this view."); return; }
+      try { await d.save({ filename, data: blob }); } catch (e) { if ((e as { code?: string })?.code !== "declined") fail("The file could not be saved here."); }
+    });
+    return;
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/** Open a print view: a new tab in the hosted app, an in-page view in the preview. */
+export function openDoc(path: string) {
+  if (IS_PREVIEW) window.dispatchEvent(new CustomEvent("mp:navigate", { detail: path.replace("&auto=1", "") }));
+  else window.open(path, "_blank");
 }
 
 export function toCSV(rows: (string | number | undefined | null)[][]): string {

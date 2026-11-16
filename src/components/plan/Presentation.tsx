@@ -12,7 +12,7 @@ import { useStatus } from "@/lib/hooks";
 import { useT } from "@/lib/i18n";
 import { DeckFont, SlideView } from "./SlideView";
 import { Badge, Button, Card, Field, IconButton, Input, Modal, Note, Segmented, Textarea, useUI } from "@/components/ui";
-import { cx, download, slug } from "@/lib/utils";
+import { cx, download, slug, openDoc } from "@/lib/utils";
 
 const readDataUrl = (f: File) => new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(f); });
 
@@ -92,11 +92,11 @@ export function Presentation({ model }: { model: Model }) {
         <Card className="space-y-2 p-4">
           <div className="text-[13.5px] font-semibold">{t("Export")}</div>
           <Button variant="primary" className="w-full" loading={busy === "pptx"} icon={<PresIcon size={15} />} disabled={!slides.length} onClick={() => run("pptx", async () => { const pngLogo = d.logoDataUrl?.startsWith("data:image/svg") ? { ...d, logoDataUrl: undefined } : d; download(`${file}.pptx`, await exportPptx(slides, pngLogo, c.brief.name)); toast(t("PowerPoint downloaded — fully editable text, tables and charts")); })}>{t("PowerPoint (.pptx)")}</Button>
-          <Button className="w-full" icon={<FileDown size={15} />} disabled={!slides.length} onClick={() => window.open(`/print/${c.id}?doc=deck&auto=1`, "_blank")}>{t("PDF")}</Button>
+          <Button className="w-full" icon={<FileDown size={15} />} disabled={!slides.length} onClick={() => openDoc(`/print/${c.id}?doc=deck&auto=1`)}>{t("PDF")}</Button>
           <Button className="w-full" loading={busy === "xlsx"} icon={<FileSpreadsheet size={15} />} onClick={() => run("xlsx", async () => { download(`${file}-planning-workbook.xlsx`, await exportWorkbook(model)); toast(t("Excel workbook downloaded")); })}>{t("Excel planning workbook")}</Button>
           <Button className="w-full" icon={<Users size={15} />} disabled={!model.selected.length} onClick={() => { download(`${file}-influencer-shortlist.csv`, shortlistCSV(model), "text/csv;charset=utf-8"); toast(t("CSV shortlist downloaded")); }}>{t("CSV influencer shortlist")}</Button>
-          <Button className="w-full" icon={<FileText size={15} />} disabled={!model.selected.length} onClick={() => window.open(`/print/${c.id}?doc=briefs`, "_blank")}>{t("Individual influencer briefs")}</Button>
-          <Button className="w-full" icon={<Printer size={15} />} disabled={!c.events.length} onClick={() => window.open(`/print/${c.id}?doc=schedule`, "_blank")}>{t("Printable attendance schedule")}</Button>
+          <Button className="w-full" icon={<FileText size={15} />} disabled={!model.selected.length} onClick={() => openDoc(`/print/${c.id}?doc=briefs`)}>{t("Individual influencer briefs")}</Button>
+          <Button className="w-full" icon={<Printer size={15} />} disabled={!c.events.length} onClick={() => openDoc(`/print/${c.id}?doc=schedule`)}>{t("Printable attendance schedule")}</Button>
           <p className="pt-1 text-[11.5px] text-ink-3">{t("PDF, briefs and schedules open a print view — choose “Save as PDF” in the print dialog.")}</p>
         </Card>
       </div>

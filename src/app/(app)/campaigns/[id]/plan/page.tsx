@@ -14,9 +14,12 @@ import { Columns, Donut, ShareBars } from "@/components/Charts";
 import { Avatar, Badge, Button, Card, Empty, Note, SectionTitle, Segmented, Stat, Textarea } from "@/components/ui";
 import { compact, fmtShort, money } from "@/lib/utils";
 
+// remembered while the app is open, so returning from a print view lands on the same tab
+let lastTab: "overview" | "presentation" = "overview";
+
 export default function PlanPage() {
   const { id } = useParams<{ id: string }>(); const t = useT(); const model = useModel(id); const update = useStore((s) => s.update); const { openAssistant } = useWorkspace();
-  const [tab, setTab] = useState<"overview" | "presentation">("overview");
+  const [tab, setTabState] = useState<"overview" | "presentation">(lastTab); const setTab = (v: "overview" | "presentation") => { lastTab = v; setTabState(v); };
   if (!model) return null;
   const c = model.campaign, b = c.brief, B = model.budget, cur = B.currency, fc = model.forecast.expected, D = model.dist;
   const platforms = new Set(c.assignments.flatMap((a) => a.deliverables.map((d) => d.platform)));

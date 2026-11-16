@@ -9,7 +9,7 @@ import { useStore } from "@/lib/store";
 import { useT } from "@/lib/i18n";
 import { CalendarView, Legend, type CalItem } from "@/components/CalendarView";
 import { Badge, Button, Card, Empty, Field, Input, Modal, Note, SectionTitle, Select, TagInput, Textarea, useUI } from "@/components/ui";
-import { fmtDate, uid } from "@/lib/utils";
+import { fmtDate, uid, openDoc } from "@/lib/utils";
 
 export function EventEditor({ ev, model, onClose }: { ev: ScheduleEvent | null; model: Model; onClose: () => void }) {
   const t = useT(); const update = useStore((s) => s.update); const c = model.campaign;
@@ -47,7 +47,7 @@ export function ScheduleTab({ model }: { model: Model }) {
   return (
     <div className="space-y-4">
       <SectionTitle title={t("Attendance and publishing schedule")} hint={t("Drag activities to another day (or hour in the daily view). Double-click a day to add one. Conflicts are detected automatically.")}
-        action={<><Button icon={<Printer size={14} />} onClick={() => window.open(`/print/${c.id}?doc=schedule`, "_blank")}>{t("Print attendance")}</Button><Button icon={<Plus size={14} />} onClick={() => setEdit({ id: uid("ev"), type: "event", title: "", date: b.eventStart || b.startDate })}>{t("Add activity")}</Button><Button variant="primary" icon={<Wand2 size={14} />} onClick={regen}>{t(c.events.length ? "Regenerate" : "Generate schedule")}</Button></>} />
+        action={<><Button icon={<Printer size={14} />} onClick={() => openDoc(`/print/${c.id}?doc=schedule`)}>{t("Print attendance")}</Button><Button icon={<Plus size={14} />} onClick={() => setEdit({ id: uid("ev"), type: "event", title: "", date: b.eventStart || b.startDate })}>{t("Add activity")}</Button><Button variant="primary" icon={<Wand2 size={14} />} onClick={regen}>{t(c.events.length ? "Regenerate" : "Generate schedule")}</Button></>} />
       <Card className="p-4"><Field label={<span className="flex items-center gap-1.5"><MapPin size={13} />{t("Event locations, stands and stages")}</span>} hint={t("Used when assigning creators to specific areas.")}><TagInput value={c.locations} onChange={(v) => update(c.id, (d) => { d.locations = v; })} placeholder={t("e.g. Main Stage, Podcast Studio, Stand B12")} /></Field></Card>
       {!c.events.length ? <Empty icon={<CalendarDays size={22} />} title={t("No schedule yet")} text={t("Generate attendance, filming slots, submission and approval deadlines and publishing dates from the content plan.")} action={<Button variant="primary" onClick={regen}>{t("Generate schedule")}</Button>} /> : <>
         {model.conflicts.length > 0 ? (

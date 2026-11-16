@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import type { Brief, Campaign, Influencer, Op, Settings, Template } from "./types";
 import { DEFAULT_BUDGET, DEFAULT_DECK, DEFAULT_WEIGHTS } from "./constants";
 import { buildDemoInfluencers } from "./demo/influencers";
@@ -17,6 +17,14 @@ export const emptyBrief = (settings?: Settings): Brief => ({
   prefs: { categories: [], minFollowers: 0, minEngagement: 0, languages: [], geo: "", contentStyle: "", tiers: [], brandRequirements: "", approvedHandles: [], excludedHandles: [], competitors: [], count: null },
   summary: "",
 });
+
+// Browser storage can be unavailable (private windows, embedded previews): fall back to memory instead of failing.
+const memory = new Map<string, string>();
+const safeStorage = {
+  getItem: (k: string) => { try { return localStorage.getItem(k); } catch { return memory.get(k) ?? null; } },
+  setItem: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { memory.set(k, v); } },
+  removeItem: (k: string) => { try { localStorage.removeItem(k); } catch { memory.delete(k); } },
+};
 
 // Undo / redo history lives in memory (per campaign) — versions are the persisted checkpoints.
 const hist: Record<string, { past: string[]; future: string[]; lastAt: number; lastLabel?: string }> = {};
@@ -114,6 +122,7 @@ export const useStore = create<State>()(
     {
       name: "marketing-planner-v1",
       skipHydration: true,
+      storage: createJSONStorage(() => safeStorage),
       partialize: (s) => ({ campaigns: s.campaigns, library: s.library, templates: s.templates, settings: s.settings }),
       onRehydrateStorage: () => (state) => { if (state) { state.hydrated = true; } },
     },

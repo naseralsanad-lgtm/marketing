@@ -187,6 +187,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [conf, setConf] = useState<(ConfirmOpts & { resolve: (v: boolean) => void }) | null>(null);
   const toast = useCallback((text: string, o?: Omit<Toast, "id" | "text">) => { const id = Date.now() + Math.random(); setToasts((x) => [...x.slice(-3), { id, text, ...o }]); setTimeout(() => setToasts((x) => x.filter((y) => y.id !== id)), o?.action ? 7000 : 3800); }, []);
   const confirm = useCallback((o: ConfirmOpts) => new Promise<boolean>((resolve) => setConf({ ...o, resolve })), []);
+  useEffect(() => { const on = (e: Event) => toast(String((e as CustomEvent).detail), { tone: "warn" }); window.addEventListener("mp:toast", on); return () => window.removeEventListener("mp:toast", on); }, [toast]);
   const done = (v: boolean) => { conf?.resolve(v); setConf(null); };
   return (
     <Ctx.Provider value={{ toast, confirm }}>

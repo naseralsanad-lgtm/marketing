@@ -12,7 +12,7 @@ import { useT } from "@/lib/i18n";
 import { Page } from "@/components/Shell";
 import { SlideView } from "@/components/plan/SlideView";
 import { Badge, Button, Card, Empty, useUI } from "@/components/ui";
-import { compact, download, fmtDate, money, slug } from "@/lib/utils";
+import { compact, download, fmtDate, money, slug, openDoc } from "@/lib/utils";
 
 export default function Reports() {
   const t = useT(); const { toast } = useUI(); const campaigns = useStore((s) => s.campaigns); const lib = useStore((s) => s.library); const [busy, setBusy] = useState("");
@@ -31,7 +31,7 @@ export default function Reports() {
               <div className="mt-auto flex flex-wrap gap-2 pt-4">
                 <Link href={`/campaigns/${c.id}/plan`}><Button variant="primary" size="sm">{t("Open presentation")}</Button></Link>
                 <Button size="sm" loading={busy === c.id + "p"} icon={<PresIcon size={13} />} onClick={() => run(c.id + "p", async () => download(`${file}.pptx`, await exportPptx(slides, c.deck.logoDataUrl?.startsWith("data:image/svg") ? { ...c.deck, logoDataUrl: undefined } : c.deck, c.brief.name)))}>PowerPoint</Button>
-                <Button size="sm" icon={<FileDown size={13} />} onClick={() => window.open(`/print/${c.id}?doc=deck&auto=1`, "_blank")}>PDF</Button>
+                <Button size="sm" icon={<FileDown size={13} />} onClick={() => openDoc(`/print/${c.id}?doc=deck&auto=1`)}>PDF</Button>
                 <Button size="sm" loading={busy === c.id + "x"} icon={<FileSpreadsheet size={13} />} onClick={() => run(c.id + "x", async () => download(`${file}-planning-workbook.xlsx`, await exportWorkbook(m)))}>Excel</Button>
                 <Button size="sm" icon={<Users size={13} />} onClick={() => download(`${file}-influencer-shortlist.csv`, shortlistCSV(m), "text/csv;charset=utf-8")}>CSV</Button>
               </div>
